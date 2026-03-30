@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% block title %}Appointment Details{% endblock %}
+{% block content %}
+<div class="container my-4">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4><i class="fas fa-calendar-check"></i> Appointment Details</h4>
+            <span class="badge bg-{{ 'success' if appointment.status == 'Confirmed' else 'warning' if appointment.status == 'Pending' else 'danger' }} fs-6">
+                {{ appointment.status }}
+            </span>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <h5><i class="fas fa-user-md"></i> Doctor Information</h5>
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Name:</strong></td>
+                            <td>Dr. {{ appointment.doctor.name }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Specialization:</strong></td>
+                            <td>{{ appointment.doctor.specialization }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Department:</strong></td>
+                            <td>{{ appointment.department }}</td>
+                        </tr>
+                        {% if appointment.doctor.qualification %}
+                        <tr>
+                            <td><strong>Qualification:</strong></td>
+                            <td>{{ appointment.doctor.qualification }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if appointment.doctor.experience_years %}
+                        <tr>
+                            <td><strong>Experience:</strong></td>
+                            <td>{{ appointment.doctor.experience_years }} years</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                    
+                    <hr>
+                    
+                    <h5><i class="fas fa-user"></i> Patient Information</h5>
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Patient ID:</strong></td>
+                            <td>{{ appointment.patient_id }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Patient Name:</strong></td>
+                            <td>{{ appointment.patient.name }}</td>
+                        </tr>
+                        {% if appointment.patient.age %}
+                        <tr>
+                            <td><strong>Age:</strong></td>
+                            <td>{{ appointment.patient.age }} years</td>
+                        </tr>
+                        {% endif %}
+                        {% if appointment.patient.gender %}
+                        <tr>
+                            <td><strong>Gender:</strong></td>
+                            <td>{{ appointment.patient.gender }}</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6><i class="fas fa-info-circle"></i> Appointment Details</h6>
+                            
+                            <p><strong>Appointment ID:</strong> #{{ appointment.appointment_id }}</p>
+                            <p><strong>Date:</strong> {{ appointment.appointment_date.strftime('%d %B %Y') }}</p>
+                            <p><strong>Time:</strong> {{ appointment.appointment_time.strftime('%I:%M %p') }}</p>
+                            <p><strong>Queue Number:</strong> {{ appointment.queue_number }}</p>
+                            
+                            <div class="mb-3">
+                                <span class="badge bg-{{ 'success' if appointment.consultation_type == 'Video' else 'info' }} fs-6">
+                                    <i class="fas fa-{{ 'video' if appointment.consultation_type == 'Video' else 'hospital' }}"></i>
+                                    {{ appointment.consultation_type }}
+                                </span>
+                            </div>
+                            
+                            {% if appointment.symptoms %}
+                                <p><strong>Symptoms:</strong></p>
+                                <p class="text-muted">{{ appointment.symptoms }}</p>
+                            {% endif %}
+                            
+                            <p><strong>Booked on:</strong></p>
+                            <p class="text-muted">{{ appointment.created_at.strftime('%d %B %Y at %I:%M %p') }}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Video Consultation Section -->
+                    {% if appointment.consultation_type == 'Video' %}
+                        <div class="card mt-3">
+                            <div class="card-body">
+                                <h6><i class="fas fa-video"></i> Video Consultation</h6>
+                                
+                                {% if appointment.status == 'Confirmed' and appointment.video_link %}
+                                    <div class="alert alert-success">
+                                        <i class="fas fa-check-circle"></i>
+                                        <strong>Video consultation is ready!</strong>
+                                    </div>
+                                    <a href="{{ appointment.video_link }}" class="btn btn-success btn-lg w-100">
+                                        <i class="fas fa-sign-in-alt"></i> Join Video Call
+                                    </a>
+                                    <small class="text-muted d-block mt-2">
+                                        Click the button above to start your video consultation
+                                    </small>
+                                {% elif appointment.status == 'Pending' %}
+                                    <div class="alert alert-warning">
+                                        <i class="fas fa-clock"></i>
+                                        Waiting for doctor to confirm your appointment
+                                    </div>
+                                {% else %}
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle"></i>
+                                        Video link will be available once appointment is confirmed
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <hr>
+            
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('appointment.my_appointments') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Appointments
+                </a>
+                
+                {% if appointment.status == 'Pending' %}
+                    <form method="POST" action="{{ url_for('appointment.accept_appointment', appointment_id=appointment.appointment_id) }}" class="d-inline">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check"></i> Accept Appointment
+                        </button>
+                    </form>
+                {% endif %}
+                
+                {% if appointment.status != 'Cancelled' %}
+                    <form method="POST" action="{{ url_for('appointment.cancel_appointment', appointment_id=appointment.appointment_id) }}" class="d-inline">
+                        <button type="submit" class="btn btn-danger" 
+                                onclick="return confirm('Are you sure you want to cancel this appointment?')">
+                            <i class="fas fa-times"></i> Cancel Appointment
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Manage Doctors{% endblock %}
+{% block content %}
+<div class="container my-4">
+  <div class="d-flex justify-content-between mb-3">
+    <h3>Doctor Management</h3>
+    <a href="{{ url_for('admin.add_doctor') }}" class="btn btn-success">Add Doctor</a>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-bordered align-middle">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Department</th>
+          <th>Specialization</th>
+          <th>Qualification</th>
+          <th>Experience</th>
+          <th>Fee</th>
+          <th>Availability</th>
+          <th>About</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for doc in doctors %}
+        <tr>
+          <td>{{ doc.name }}</td>
+          <td>{{ doc.department }}</td>
+          <td>{{ doc.specialization }}</td>
+          <td>{{ doc.qualification }}</td>
+          <td>{{ doc.experience_years }}</td>
+          <td>₹{{ doc.consultation_fee }}</td>
+          <td>{{ doc.availability_days }}<br>{{ doc.availability_time }}</td>
+          <td>{{ doc.about|truncate(40) }}</td>
+          <td>
+            <a href="{{ url_for('admin.edit_doctor', doctor_id=doc.doctor_id) }}" class="btn btn-warning btn-sm mb-1">Edit</a>
+            <form method="post" action="{{ url_for('admin.delete_doctor', doctor_id=doc.doctor_id) }}" style="display:inline;">
+              <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete doctor?');">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

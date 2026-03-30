@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}My Appointments{% endblock %}
+{% block content %}
+<div class="container my-4">
+    <h3>My Appointments (Patient ID: {{ patient_id }})</h3>
+    <form method="get" class="mb-4">
+      <div class="row">
+        <div class="col-md-4">
+          <input type="text" class="form-control" name="patient_id" placeholder="Enter Patient ID" value="{{ patient_id }}">
+        </div>
+        <div class="col-md-2">
+          <button type="submit" class="btn btn-primary">Show Appointments</button>
+        </div>
+      </div>
+    </form>
+    {% if appointments %}
+    <div class="table-responsive">
+      <table class="table table-bordered align-middle">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Doctor</th>
+            <th>Department</th>
+            <th>Symptoms</th>
+            <th>Queue</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for app in appointments %}
+          <tr>
+            <td>{{ app.appointment_date.strftime('%Y-%m-%d') }}</td>
+            <td>{{ app.appointment_time.strftime('%H:%M') }}</td>
+            <td>{{ app.doctor.name }}</td>
+            <td>{{ app.department }}</td>
+            <td>{{ app.symptoms }}</td>
+            <td>{{ app.queue_number }}</td>
+            <td><span class="badge bg-info">{{ app.status }}</span></td>
+            <td>
+              {% if app.status in ['Pending', 'Confirmed'] %}
+                <form method="post" action="{{ url_for('patient.cancel_appointment', appointment_id=app.appointment_id, patient_id=patient_id) }}" style="display:inline">
+                  <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Cancel this appointment?')">Cancel</button>
+                </form>
+              {% else %}
+                --
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <div class="alert alert-secondary">No appointments found.</div>
+    {% endif %}
+</div>
+{% endblock %}

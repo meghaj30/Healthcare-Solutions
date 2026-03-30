@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}Departments{% endblock %}
+{% block content %}
+<div class="container my-4">
+    <h2>Departments</h2>
+    <div class="list-group mt-4">
+    {% for dept in departments %}
+      <a href="{{ url_for('patient.doctors_by_department', department=dept) }}" class="list-group-item list-group-item-action">
+        {{ dept }}
+      </a>
+    {% endfor %}
+    </div>
+</div>
+{% endblock %}

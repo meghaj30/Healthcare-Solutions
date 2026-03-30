@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Resource - Healthcare Solutions</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .form-container {
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            padding: 40px;
+            margin-top: 50px;
+            margin-bottom: 50px;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .category-card {
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .category-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+        
+        .category-card.selected {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        .stock-preview {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="form-container">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-plus-circle fa-3x text-primary mb-3"></i>
+                        <h2>Add New Resource</h2>
+                        <p class="text-muted">Add medicines, equipment, or supplies to inventory</p>
+                    </div>
+                    
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <form method="POST">
+                        <!-- Category Selection -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-tag"></i> Resource Category
+                            </label>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="category-card" data-category="Medicine">
+                                        <div class="text-center">
+                                            <i class="fas fa-pills fa-2x text-primary mb-2"></i>
+                                            <h6>Medicine</h6>
+                                            <small class="text-muted">Drugs and medications</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="category-card" data-category="Equipment">
+                                        <div class="text-center">
+                                            <i class="fas fa-tools fa-2x text-success mb-2"></i>
+                                            <h6>Equipment</h6>
+                                            <small class="text-muted">Medical devices</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="category-card" data-category="Supplies">
+                                        <div class="text-center">
+                                            <i class="fas fa-box fa-2x text-info mb-2"></i>
+                                            <h6>Supplies</h6>
+                                            <small class="text-muted">Consumables</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="hidden" name="category" id="category" required>
+                        </div>
+                        
+                        <!-- Basic Information -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="name" class="form-label">
+                                    <i class="fas fa-cube"></i> Resource Name *
+                                </label>
+                                <input type="text" class="form-control" id="name" name="name" required
+                                       placeholder="e.g., Paracetamol 500mg">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="unit" class="form-label">
+                                    <i class="fas fa-balance-scale"></i> Unit *
+                                </label>
+                                <select class="form-select" id="unit" name="unit" required>
+                                    <option value="">Select unit...</option>
+                                    <option value="units">Units</option>
+                                    <option value="boxes">Boxes</option>
+                                    <option value="bottles">Bottles</option>
+                                    <option value="vials">Vials</option>
+                                    <option value="liters">Liters</option>
+                                    <option value="ml">Milliliters</option>
+                                    <option value="kg">Kilograms</option>
+                                    <option value="grams">Grams</option>
+                                    <option value="pieces">Pieces</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">
+                                <i class="fas fa-info-circle"></i> Description
+                            </label>
+                            <textarea class="form-control" id="description" name="description" rows="3"
+                                      placeholder="Detailed description of the resource..."></textarea>
+                        </div>
+                        
+                        <!-- Stock Information -->
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="current_stock" class="form-label">
+                                    <i class="fas fa-boxes"></i> Current Stock *
+                                </label>
+                                <input type="number" class="form-control" id="current_stock" name="current_stock" 
+                                       min="0" required onchange="updateStockPreview()">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="minimum_stock" class="form-label">
+                                    <i class="fas fa-exclamation-triangle"></i> Minimum Stock *
+                                </label>
+                                <input type="number" class="form-control" id="minimum_stock" name="minimum_stock" 
+                                       min="0" required onchange="updateStockPreview()">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="maximum_stock" class="form-label">
+                                    <i class="fas fa-arrow-up"></i> Maximum Stock *
+                                </label>
+                                <input type="number" class="form-control" id="maximum_stock" name="maximum_stock" 
+                                       min="0" required onchange="updateStockPreview()">
+                            </div>
+                        </div>
+                        
+                        <!-- Stock Preview -->
+                        <div class="stock-preview" id="stockPreview" style="display: none;">
+                            <h6><i class="fas fa-chart-line"></i> Stock Status Preview</h6>
+                            <div class="progress mb-2">
+                                <div class="progress-bar" id="stockProgress" role="progressbar"></div>
+                            </div>
+                            <p class="mb-0" id="stockStatus"></p>
+                        </div>
+                        
+                        <!-- Additional Information -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="location" class="form-label">
+                                    <i class="fas fa-map-marker-alt"></i> Location
+                                </label>
+                                <input type="text" class="form-control" id="location" name="location"
+                                       placeholder="e.g., Pharmacy, Ward A, Storage Room">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="supplier" class="form-label">
+                                    <i class="fas fa-truck"></i> Supplier
+                                </label>
+                                <input type="text" class="form-control" id="supplier" name="supplier"
+                                       placeholder="e.g., MedSupply Corp">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="cost_per_unit" class="form-label">
+                                    <i class="fas fa-dollar-sign"></i> Cost per Unit
+                                </label>
+                                <input type="number" class="form-control" id="cost_per_unit" name="cost_per_unit" 
+                                       min="0" step="0.01" placeholder="0.00">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="expiry_date" class="form-label">
+                                    <i class="fas fa-calendar-alt"></i> Expiry Date
+                                </label>
+                                <input type="date" class="form-control" id="expiry_date" name="expiry_date">
+                                <small class="form-text text-muted">For medicines only</small>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-submit">
+                                <i class="fas fa-plus-circle"></i> Add Resource
+                            </button>
+                            <a href="{{ url_for('resource.resource_dashboard') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Dashboard
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Category selection
+        document.querySelectorAll('.category-card').forEach(card => {
+            card.addEventListener('click', function() {
+                document.querySelectorAll('.category-card').forEach(c => {
+                    c.classList.remove('selected');
+                });
+                this.classList.add('selected');
+                document.getElementById('category').value = this.dataset.category;
+            });
+        });
+        
+        // Stock preview
+        function updateStockPreview() {
+            const current = parseInt(document.getElementById('current_stock').value) || 0;
+            const minimum = parseInt(document.getElementById('minimum_stock').value) || 1;
+            const maximum = parseInt(document.getElementById('maximum_stock').value) || 100;
+            
+            if (current && minimum && maximum) {
+                const preview = document.getElementById('stockPreview');
+                const progress = document.getElementById('stockProgress');
+                const status = document.getElementById('stockStatus');
+                
+                preview.style.display = 'block';
+                
+                // Calculate percentage
+                const percentage = Math.min((current / maximum) * 100, 100);
+                progress.style.width = percentage + '%';
+                
+                // Determine status
+                let statusText = '';
+                let progressClass = '';
+                
+                if (current === 0) {
+                    statusText = '❌ Out of Stock - Immediate attention required!';
+                    progressClass = 'bg-danger';
+                } else if (current <= minimum * 0.5) {
+                    statusText = '🚨 Very Low Stock - Order immediately!';
+                    progressClass = 'bg-danger';
+                } else if (current <= minimum) {
+                    statusText = '⚠️ Low Stock - Order soon!';
+                    progressClass = 'bg-warning';
+                } else if (current >= maximum * 0.8) {
+                    statusText = '✅ Good Stock Level';
+                    progressClass = 'bg-success';
+                } else {
+                    statusText = '✅ Adequate Stock';
+                    progressClass = 'bg-info';
+                }
+                
+                progress.className = 'progress-bar ' + progressClass;
+                status.textContent = statusText + ` (${current} / ${maximum} ${document.getElementById('unit').value})`;
+            }
+        }
+        
+        // Form validation
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const category = document.getElementById('category').value;
+            const current = parseInt(document.getElementById('current_stock').value);
+            const minimum = parseInt(document.getElementById('minimum_stock').value);
+            const maximum = parseInt(document.getElementById('maximum_stock').value);
+            
+            if (!category) {
+                e.preventDefault();
+                alert('Please select a resource category');
+                return false;
+            }
+            
+            if (minimum >= maximum) {
+                e.preventDefault();
+                alert('Minimum stock must be less than maximum stock');
+                return false;
+            }
+            
+            if (current > maximum) {
+                e.preventDefault();
+                alert('Current stock cannot exceed maximum stock');
+                return false;
+            }
+        });
+        
+        // Set minimum date for expiry (today)
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('expiry_date').setAttribute('min', today);
+    </script>
+</body>
+</html>

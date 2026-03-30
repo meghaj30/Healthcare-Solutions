@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% block title %}Book Appointment{% endblock %}
+{% block content %}
+<div class="container my-4">
+    <div class="card">
+      <div class="card-body">
+        <h3><i class="fas fa-calendar-check"></i> Book Appointment</h3>
+        <p class="text-muted">Schedule your consultation with our expert doctors</p>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <form method="post">
+            <!-- Consultation Type Selection -->
+            <div class="mb-4">
+                <label class="form-label fw-bold">
+                    <i class="fas fa-stethoscope"></i> Consultation Type
+                </label>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card consultation-type-card" data-type="In-Person">
+                            <div class="card-body text-center">
+                                <i class="fas fa-hospital fa-2x text-primary mb-2"></i>
+                                <h6>In-Person Visit</h6>
+                                <small class="text-muted">Visit the hospital</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card consultation-type-card" data-type="Video">
+                            <div class="card-body text-center">
+                                <i class="fas fa-video fa-2x text-success mb-2"></i>
+                                <h6>Video Consultation</h6>
+                                <small class="text-muted">Online via webcam</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" name="consultation_type" id="consultation_type" value="In-Person" required>
+            </div>
+            
+          <div class="mb-3">
+            <label for="patient_id" class="form-label">
+                <i class="fas fa-user"></i> Select Patient (HMS ID)
+            </label>
+            <select class="form-select" id="patient_id" name="patient_id" required>
+                <option value="">Choose a patient...</option>
+                {% for patient in patients %}
+                    <option value="{{ patient.patient_id }}">
+                        HMS ID: {{ patient.patient_id }} - {{ patient.name }} (Age: {{ patient.age }})
+                    </option>
+                {% endfor %}
+            </select>
+            <div class="mt-2">
+                <small class="form-text text-muted">Select patient using their Hospital Management System (HMS) ID</small>
+                <div>
+                    <small class="text-info">
+                        <i class="fas fa-info-circle"></i> 
+                        New patient? 
+                        <a href="{{ url_for('register') }}" class="text-decoration-none">
+                            Register here first
+                        </a>
+                    </small>
+                </div>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="doctor_id" class="form-label">Select Doctor</label>
+            <select class="form-select" id="doctor_id" name="doctor_id" required>
+                <option value="">Choose a doctor...</option>
+                {% for doctor in doctors %}
+                    <option value="{{ doctor.doctor_id }}">
+                        Dr. {{ doctor.name }} - {{ doctor.specialization }}
+                    </option>
+                {% endfor %}
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label for="department" class="form-label">Department</label>
+            <input type="text" class="form-control" id="department" name="department" required>
+          </div>
+          
+          <div class="mb-3">
+            <label for="symptoms" class="form-label">Symptoms / Reason for Visit</label>
+            <textarea class="form-control" id="symptoms" name="symptoms" rows="3" 
+                      placeholder="Please describe your symptoms..."></textarea>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="appointment_date" class="form-label">Date</label>
+                <input type="date" class="form-control" id="appointment_date" name="appointment_date" required>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="appointment_time" class="form-label">Time</label>
+                <input type="time" class="form-control" id="appointment_time" name="appointment_time" required>
+            </div>
+          </div>
+          
+          <!-- Video Consultation Info -->
+          <div id="videoInfo" class="alert alert-info d-none">
+            <i class="fas fa-info-circle"></i>
+            <strong>Video Consultation:</strong> You'll receive a secure video link once the doctor confirms your appointment.
+          </div>
+          
+          <button type="submit" class="btn btn-primary btn-lg">
+              <i class="fas fa-check-circle"></i> Book Appointment
+          </button>
+        </form>
+      </div>
+    </div>
+</div>
+
+<style>
+.consultation-type-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid #e9ecef;
+}
+
+.consultation-type-card:hover {
+    border-color: #007bff;
+    transform: translateY(-2px);
+}
+
+.consultation-type-card.selected {
+    border-color: #007bff;
+    background: rgba(0, 123, 255, 0.1);
+}
+</style>
+
+<script>
+document.querySelectorAll('.consultation-type-card').forEach(card => {
+    card.addEventListener('click', function() {
+        document.querySelectorAll('.consultation-type-card').forEach(c => {
+            c.classList.remove('selected');
+        });
+        this.classList.add('selected');
+        document.getElementById('consultation_type').value = this.dataset.type;
+        
+        const videoInfo = document.getElementById('videoInfo');
+        if (this.dataset.type === 'Video') {
+            videoInfo.classList.remove('d-none');
+        } else {
+            videoInfo.classList.add('d-none');
+        }
+    });
+});
+
+document.querySelector('[data-type="In-Person"]').classList.add('selected');
+
+document.getElementById('doctor_id').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    const doctorInfo = selectedOption.text;
+    if (doctorInfo.includes('-')) {
+        const department = doctorInfo.split('-')[1].trim();
+        document.getElementById('department').value = department;
+    }
+});
+
+const today = new Date().toISOString().split('T')[0];
+document.getElementById('appointment_date').setAttribute('min', today);
+</script>
+{% endblock %}

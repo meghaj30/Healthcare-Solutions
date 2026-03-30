@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}Doctor Profile{% endblock %}
+{% block content %}
+<div class="container my-4">
+    <div class="card">
+      <div class="card-body">
+        <h3 class="card-title">{{ doctor.name }}</h3>
+        <p><b>Specialization:</b> {{ doctor.specialization }}</p>
+        <p><b>Qualification:</b> {{ doctor.qualification }}</p>
+        <p><b>Experience:</b> {{ doctor.experience_years }} years</p>
+        <p><b>Consultation fee:</b> ₹{{ doctor.consultation_fee }}</p>
+        <p><b>Availability:</b> {{ doctor.availability_days }} | {{ doctor.availability_time }}</p>
+        <p><i>{{ doctor.about }}</i></p>
+        <a href="{{ url_for('patient.book_appointment', doctor_id=doctor.doctor_id) }}" class="btn btn-success mt-2">Book an Appointment</a>
+      </div>
+    </div>
+</div>
+{% endblock %}

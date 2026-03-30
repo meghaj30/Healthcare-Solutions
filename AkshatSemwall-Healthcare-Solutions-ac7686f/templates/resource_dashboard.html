@@ -1,0 +1,382 @@
+{% extends 'base.html' %}
+{% block title %}Resource Availability Dashboard{% endblock %}
+{% block content %}
+<div class="container-fluid my-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2>
+                                <i class="fas fa-warehouse"></i> 
+                                Resource Availability Dashboard
+                            </h2>
+                            <p class="mb-0">Real-time inventory monitoring and stock management</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <button class="btn btn-light" onclick="refreshDashboard()">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                            <a href="{{ url_for('resource.add_resource') }}" class="btn btn-success">
+                                <i class="fas fa-plus"></i> Add Resource
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Critical Alerts -->
+    {% if critical_items %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <h5><i class="fas fa-exclamation-triangle"></i> Critical Stock Alerts!</h5>
+                <div class="row">
+                    {% for item in critical_items[:6] %}
+                    <div class="col-md-6 mb-2">
+                        <div class="alert alert-{{ 'danger' if item.priority == 'Critical' else 'warning' if item.priority == 'High' else 'info' }} p-2">
+                            <strong>{{ item.resource.name }}</strong> - {{ item.message }}
+                            <div class="mt-1">
+                                <small>
+                                    Current: {{ item.resource.current_stock }} {{ item.resource.unit }} | 
+                                    Min: {{ item.resource.minimum_stock }} {{ item.resource.unit }}
+                                </small>
+                                <a href="{{ url_for('resource.resource_details', resource_id=item.resource.resource_id) }}" 
+                                   class="btn btn-sm btn-outline-primary ms-2">
+                                    <i class="fas fa-eye"></i> Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3">
+            <div class="card bg-info text-white text-center">
+                <div class="card-body">
+                    <i class="fas fa-boxes fa-2x mb-2"></i>
+                    <h4>{{ total_resources }}</h4>
+                    <p class="mb-0">Total Resources</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3">
+            <div class="card bg-success text-white text-center">
+                <div class="card-body">
+                    <i class="fas fa-check-circle fa-2x mb-2"></i>
+                    <h4>{{ total_resources - low_stock_count - out_of_stock_count }}</h4>
+                    <p class="mb-0">In Stock</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3">
+            <div class="card bg-warning text-white text-center">
+                <div class="card-body">
+                    <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                    <h4>{{ low_stock_count }}</h4>
+                    <p class="mb-0">Low Stock</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3">
+            <div class="card bg-danger text-white text-center">
+                <div class="card-body">
+                    <i class="fas fa-times-circle fa-2x mb-2"></i>
+                    <h4>{{ out_of_stock_count }}</h4>
+                    <p class="mb-0">Out of Stock</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resource Categories -->
+    <div class="row mb-4">
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5><i class="fas fa-pills"></i> Medicines ({{ medicines|length }})</h5>
+                </div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    {% if medicines %}
+                        {% for medicine in medicines %}
+                        <div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+                            <div>
+                                <strong>{{ medicine.name }}</strong>
+                                <br>
+                                <small class="text-muted">{{ medicine.current_stock }} {{ medicine.unit }}</small>
+                                {% if medicine.expiry_date %}
+                                <br>
+                                <small class="text-{{ 'danger' if medicine.expiry_date <= today else 'warning' if medicine.expiry_date <= today + timedelta(days=30) else 'muted' }}">
+                                    Expires: {{ medicine.expiry_date.strftime('%d %b %Y') }}
+                                </small>
+                                {% endif %}
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-{{ 'danger' if medicine.current_stock == 0 else 'warning' if medicine.current_stock <= medicine.minimum_stock else 'success' }}">
+                                    {{ medicine.status }}
+                                </span>
+                                <div>
+                                    <a href="{{ url_for('resource.resource_details', resource_id=medicine.resource_id) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center">No medicines in inventory</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5><i class="fas fa-tools"></i> Equipment ({{ equipment|length }})</h5>
+                </div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    {% if equipment %}
+                        {% for item in equipment %}
+                        <div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+                            <div>
+                                <strong>{{ item.name }}</strong>
+                                <br>
+                                <small class="text-muted">{{ item.current_stock }} {{ item.unit }}</small>
+                                {% if item.location %}
+                                <br>
+                                <small class="text-muted">Location: {{ item.location }}</small>
+                                {% endif %}
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-{{ 'danger' if item.current_stock == 0 else 'warning' if item.current_stock <= item.minimum_stock else 'success' }}">
+                                    {{ item.status }}
+                                </span>
+                                <div>
+                                    <a href="{{ url_for('resource.resource_details', resource_id=item.resource_id) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center">No equipment in inventory</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5><i class="fas fa-box"></i> Supplies ({{ supplies|length }})</h5>
+                </div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    {% if supplies %}
+                        {% for item in supplies %}
+                        <div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+                            <div>
+                                <strong>{{ item.name }}</strong>
+                                <br>
+                                <small class="text-muted">{{ item.current_stock }} {{ item.unit }}</small>
+                                {% if item.supplier %}
+                                <br>
+                                <small class="text-muted">Supplier: {{ item.supplier }}</small>
+                                {% endif %}
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-{{ 'danger' if item.current_stock == 0 else 'warning' if item.current_stock <= item.minimum_stock else 'success' }}">
+                                    {{ item.status }}
+                                </span>
+                                <div>
+                                    <a href="{{ url_for('resource.resource_details', resource_id=item.resource_id) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center">No supplies in inventory</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="fas fa-history"></i> Recent Transactions</h5>
+                    <a href="#" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_transactions %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Resource</th>
+                                        <th>Type</th>
+                                        <th>Quantity</th>
+                                        <th>Remaining Stock</th>
+                                        <th>Reason</th>
+                                        <th>Date</th>
+                                        <th>Performed By</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for transaction in recent_transactions %}
+                                    <tr>
+                                        <td>
+                                            <a href="{{ url_for('resource.resource_details', resource_id=transaction.resource.resource_id) }}">
+                                                {{ transaction.resource.name }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{{ 'success' if transaction.transaction_type == 'Stock In' else 'warning' if transaction.transaction_type == 'Used' else 'danger' }}">
+                                                {{ transaction.transaction_type }}
+                                            </span>
+                                        </td>
+                                        <td>{{ transaction.quantity }} {{ transaction.resource.unit }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ 'danger' if transaction.remaining_stock == 0 else 'warning' if transaction.remaining_stock <= transaction.resource.minimum_stock else 'success' }}">
+                                                {{ transaction.remaining_stock }} {{ transaction.resource.unit }}
+                                            </span>
+                                        </td>
+                                        <td>{{ transaction.reason or '-' }}</td>
+                                        <td>{{ transaction.transaction_date.strftime('%d %b %Y %H:%M') }}</td>
+                                        <td>{{ transaction.performed_by or '-' }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center">No recent transactions</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Real-time Stock Monitoring Script -->
+<script>
+let stockAlertInterval;
+
+function refreshDashboard() {
+    window.location.reload();
+}
+
+function checkStockAlerts() {
+    fetch('/get_stock_alerts')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success' && data.alerts.length > 0) {
+                // Update alert count in navigation
+                updateAlertBadge(data.total_alerts);
+                
+                // Show critical alerts
+                data.alerts.forEach(alert => {
+                    if (alert.priority === 'Critical') {
+                        showCriticalAlert(alert);
+                    }
+                });
+            }
+        })
+        .catch(error => console.log('Error checking stock alerts:', error));
+}
+
+function updateAlertBadge(count) {
+    // Update navigation badge if exists
+    const badge = document.querySelector('.stock-alert-badge');
+    if (badge) {
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'inline' : 'none';
+    }
+}
+
+function showCriticalAlert(alert) {
+    // Create critical alert notification
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-danger alert-dismissible fade show position-fixed';
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 350px;';
+    alertDiv.innerHTML = `
+        <h6><i class="fas fa-exclamation-triangle"></i> Critical Stock Alert!</h6>
+        <p class="mb-1">${alert.message}</p>
+        <a href="/resource_details/${alert.resource_id}" class="btn btn-sm btn-danger">View Details</a>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    // Auto-remove after 15 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.parentNode.removeChild(alertDiv);
+        }
+    }, 15000);
+}
+
+// Start monitoring stock alerts every 30 seconds
+stockAlertInterval = setInterval(checkStockAlerts, 30000);
+
+// Check immediately on load
+checkStockAlerts();
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', () => {
+    if (stockAlertInterval) {
+        clearInterval(stockAlertInterval);
+    }
+});
+</script>
+
+<style>
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.alert {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+</style>
+
+{% endblock %}

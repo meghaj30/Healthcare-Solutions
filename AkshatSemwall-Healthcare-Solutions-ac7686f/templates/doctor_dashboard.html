@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% block title %}Doctor Dashboard{% endblock %}
+{% block content %}
+<div class="container my-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h3>Welcome, Dr. {{ doctor.name }}</h3>
+      <p><span class="badge bg-primary">Department: {{ doctor.department }}</span></p>
+    </div>
+    <div>
+      <a href="{{ url_for('doctor.doctor_logout') }}" class="btn btn-outline-secondary">Logout</a>
+    </div>
+  </div>
+  <h5>Today's Appointments ({{ todays_appointments|length }})</h5>
+  {% if todays_appointments %}
+  <div class="table-responsive">
+    <table class="table table-bordered align-middle">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Queue</th>
+          <th>Patient</th>
+          <th>Symptoms</th>
+          <th>Status</th>
+          <th>Update</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for app in todays_appointments %}
+        <tr>
+          <td>{{ app.appointment_time.strftime('%H:%M') }}</td>
+          <td>{{ app.queue_number }}</td>
+          <td>
+            {% if app.patient %}
+              <a href="{{ url_for('doctor.view_patient_details', patient_id=app.patient.patient_id) }}">{{ app.patient.name }}</a>
+            {% else %}
+              {{ app.patient_id }}
+            {% endif %}
+          </td>
+          <td>{{ app.symptoms }}</td>
+          <td><span class="badge bg-info">{{ app.status }}</span></td>
+          <td>
+            <a href="{{ url_for('doctor.update_appointment_status', appointment_id=app.appointment_id) }}" class="btn btn-sm btn-outline-primary">Update</a>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div class="alert alert-info">No appointments scheduled for today.</div>
+  {% endif %}
+
+  <h5 class="mt-4">Upcoming Appointments ({{ upcoming_appointments|length }})</h5>
+  {% if upcoming_appointments %}
+  <div class="table-responsive">
+    <table class="table table-bordered align-middle">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Queue</th>
+          <th>Patient</th>
+          <th>Symptoms</th>
+          <th>Status</th>
+          <th>Update</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for app in upcoming_appointments %}
+        <tr>
+          <td>{{ app.appointment_date.strftime('%Y-%m-%d') }}</td>
+          <td>{{ app.appointment_time.strftime('%H:%M') }}</td>
+          <td>{{ app.queue_number }}</td>
+          <td>
+            {% if app.patient %}
+              <a href="{{ url_for('doctor.view_patient_details', patient_id=app.patient.patient_id) }}">{{ app.patient.name }}</a>
+            {% else %}
+              {{ app.patient_id }}
+            {% endif %}
+          </td>
+          <td>{{ app.symptoms }}</td>
+          <td><span class="badge bg-warning">{{ app.status }}</span></td>
+          <td>
+            <a href="{{ url_for('doctor.update_appointment_status', appointment_id=app.appointment_id) }}" class="btn btn-sm btn-outline-primary">Update</a>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div class="alert alert-info">No upcoming appointments scheduled.</div>
+  {% endif %}
+
+  <h5 class="mt-4">Recent Past Appointments ({{ past_appointments|length }})</h5>
+  {% if past_appointments %}
+  <div class="table-responsive">
+    <table class="table table-bordered align-middle">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Queue</th>
+          <th>Patient</th>
+          <th>Symptoms</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for app in past_appointments %}
+        <tr>
+          <td>{{ app.appointment_date.strftime('%Y-%m-%d') }}</td>
+          <td>{{ app.appointment_time.strftime('%H:%M') }}</td>
+          <td>{{ app.queue_number }}</td>
+          <td>
+            {% if app.patient %}
+              <a href="{{ url_for('doctor.view_patient_details', patient_id=app.patient.patient_id) }}">{{ app.patient.name }}</a>
+            {% else %}
+              {{ app.patient_id }}
+            {% endif %}
+          </td>
+          <td>{{ app.symptoms }}</td>
+          <td>
+            {% if app.status == 'Completed' %}
+              <span class="badge bg-success">{{ app.status }}</span>
+            {% elif app.status == 'Cancelled' %}
+              <span class="badge bg-danger">{{ app.status }}</span>
+            {% else %}
+              <span class="badge bg-secondary">{{ app.status }}</span>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div class="alert alert-info">No past appointments found.</div>
+  {% endif %}
+</div>
+{% endblock %}

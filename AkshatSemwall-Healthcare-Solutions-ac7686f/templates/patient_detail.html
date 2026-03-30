@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}Patient Details{% endblock %}
+
+{% block extra_css %}
+<style>
+  .patient-header {
+    background: linear-gradient(135deg, var(--bs-primary), var(--bs-info));
+    color: white;
+    border-radius: var(--bs-border-radius);
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
+  
+  .patient-id-display {
+    font-family: 'Courier New', monospace;
+    font-size: 1.2rem;
+    font-weight: 600;
+    background-color: rgba(255,255,255,0.2);
+    padding: 0.5rem 1rem;
+    border-radius: var(--bs-border-radius);
+    display: inline-block;
+    margin-top: 1rem;
+  }
+  
+  .info-card {
+    border-left: 4px solid var(--bs-primary);
+    transition: transform 0.2s;
+  }
+  
+  .info-card:hover {
+    transform: translateY(-2px);
+  }
+  
+  .status-active {
+    color: var(--bs-success);
+  }
+  
+  .status-discharged {
+    color: var(--bs-info);
+  }
+  
+  .status-emergency {
+    color: var(--bs-danger);
+    font-weight: 600;
+  }
+  
+  .billing-summary {
+    background-color: var(--bs-light);
+    border-radius: var(--bs-border-radius);
+    padding: 1.5rem;
+  }
+  
+  .amount-positive {
+    color: var(--bs-success);
+    font-weight: 600;
+  }
+  
+  .amount-negative {
+    color: var(--bs-danger);
+    font-weight: 600;
+  }
+  
+  .timeline-item {
+    border-left: 2px solid var(--bs-primary);
+    padding-left: 1rem;
+    margin-left: 1rem;
+    padding-bottom: 1rem;
+  }
+  
+  .timeline-item:last-child {
+    border-left-color: transparent;
+  }
+  
+  .timeline-marker {
+    width: 12px;
+    height: 12px;
+    background-color: var(--bs-primary);
+    border-radius: 50%;
+    margin-left: -7px;
+    margin-top: 0.5rem;
+    float: left;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+  <div class="card">
+    <div class="card-body">
+      <h4 class="card-title mb-3">Patient: {{ patient.name }} (ID: {{ patient.patient_id }})</h4>
+      <div class="mb-2"><b>Age:</b> {{ patient.age }}</div>
+      <div class="mb-2"><b>Gender:</b> {{ patient.gender }}</div>
+      <div class="mb-2"><b>Locality:</b> {{ patient.locality }}</div>
+      <div class="mb-2"><b>Severity:</b> {{ patient.condition_severity }}</div>
+      <div class="mb-2"><b>Priority Level:</b> {{ patient.priority_level }}</div>
+      <div class="mb-2"><b>Medical History:</b> {{ patient.medical_history }}</div>
+      <div class="mb-2"><b>Admission Date:</b> {{ patient.admission_date }}</div>
+      <div class="mb-2"><b>Discharge Date:</b> {{ patient.discharge_date if patient.discharge_date else '-' }}</div>
+      <div class="mb-2"><b>Insurance Coverage:</b> {{ patient.insurance_coverage }}</div>
+      <div class="mb-2"><b>Insurance Details:</b> {{ patient.insurance_details }}</div>
+      {% if not doctor_view %}
+      <a href="/edit_patient/{{ patient.patient_id }}" class="btn btn-warning">Edit Patient</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Focus on payment amount when modal opens
+  const paymentModal = document.getElementById('paymentModal');
+  if (paymentModal) {
+    paymentModal.addEventListener('shown.bs.modal', function() {
+      document.getElementById('paymentAmount').focus();
+    });
+  }
+});
+</script>
+{% endblock %}

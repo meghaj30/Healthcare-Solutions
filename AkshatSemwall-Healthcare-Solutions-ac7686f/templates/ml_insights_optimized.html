@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% block title %}Real-Time ML Analytics Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+  .bg-gradient-primary { background: linear-gradient(135deg, #6a11cb, #2575fc); color: white !important; }
+  .bg-gradient-success { background: linear-gradient(135deg, #11998e, #38ef7d); color: white !important; }
+  .bg-gradient-warning { background: linear-gradient(135deg, #f7971e, #ffd200); color: white !important; }
+  .bg-gradient-info { background: linear-gradient(135deg, #56ccf2, #2f80ed); color: white !important; }
+  .bg-gradient-danger { background: linear-gradient(135deg, #ff416c, #ff4b2b); color: white !important; }
+  .rounded-soft { border-radius: 12px; }
+  .card-header i { opacity: 0.9; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Dashboard Header -->
+<div class="card mb-4 shadow-lg rounded-soft">
+  <div class="card-header bg-gradient-primary d-flex justify-content-between align-items-center">
+    <h5 class="mb-0"><i class="fas fa-brain me-2"></i>ML Analytics Dashboard</h5>
+    <button id="refreshBtn" class="btn btn-light btn-sm">
+      <i class="fas fa-sync-alt me-1"></i>Refresh
+    </button>
+  </div>
+  <div class="card-body">
+    <p class="mb-3 fs-6 text-muted">
+      <i class="fas fa-database me-2 text-info"></i>
+      Live analysis of <strong class="text-primary">{{ insights.summary.total_patients_analyzed if insights.summary else 0 }}</strong> patient records
+    </p>
+
+    <div class="row text-center">
+      <div class="col-md-3 col-6 mb-3">
+        <div class="p-3 bg-gradient-info text-white rounded-soft shadow-sm">
+          <i class="fas fa-clock fa-lg mb-2"></i>
+          <div class="fw-bold">{{ insights.visit_analysis.peak_times.peak_hour if insights.visit_analysis and insights.visit_analysis.peak_times else 'Loading...' }}</div>
+          <small>Peak Hour</small>
+        </div>
+      </div>
+      <div class="col-md-3 col-6 mb-3">
+        <div class="p-3 bg-gradient-success text-white rounded-soft shadow-sm">
+          <i class="fas fa-calendar-day fa-lg mb-2"></i>
+          <div class="fw-bold">{{ insights.visit_analysis.peak_times.peak_day.split('(')[0] if insights.visit_analysis and insights.visit_analysis.peak_times else 'Loading...' }}</div>
+          <small>Busiest Day</small>
+        </div>
+      </div>
+      <div class="col-md-3 col-6 mb-3">
+        <div class="p-3 bg-gradient-warning text-white rounded-soft shadow-sm">
+          <i class="fas fa-calendar-alt fa-lg mb-2"></i>
+          <div class="fw-bold">{{ insights.visit_analysis.peak_times.peak_month.split('(')[0] if insights.visit_analysis and insights.visit_analysis.peak_times else 'Loading...' }}</div>
+          <small>Peak Month</small>
+        </div>
+      </div>
+      <div class="col-md-3 col-6 mb-3">
+        <div class="p-3 bg-gradient-danger text-white rounded-soft shadow-sm">
+          <i class="fas fa-check-circle fa-lg mb-2"></i>
+          <div class="fw-bold">{{ insights.summary.data_quality_score if insights.summary else 0 }}%</div>
+          <small>Data Quality</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Visit Predictions -->
+<div class="card mb-3 shadow-lg rounded-soft">
+  <div class="card-header bg-gradient-info text-white">
+    <i class="fas fa-chart-line me-2"></i>Visit Predictions
+  </div>
+  <div class="card-body">
+    <h5><i class="fas fa-calendar-plus me-2"></i>Tomorrow's Visits</h5>
+    <p class="fs-4">
+      {{ insights.visit_analysis.visit_predictions.weekly_forecast[0].predicted_visits if insights.visit_analysis and insights.visit_analysis.visit_predictions and insights.visit_analysis.visit_predictions.weekly_forecast else 'Loading...' }}
+    </p>
+    <hr>
+    <h6><i class="fas fa-calendar-week me-2"></i>Weekly Forecast:</h6>
+    {% if insights.visit_analysis and insights.visit_analysis.visit_predictions and insights.visit_analysis.visit_predictions.weekly_forecast %}
+      <ul class="list-group">
+        {% for day in insights.visit_analysis.visit_predictions.weekly_forecast[:5] %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-calendar-day me-1 text-muted"></i>{{ day.day_name }}</span>
+            <span class="badge bg-primary">{{ day.predicted_visits }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-muted">No forecast data available.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Top Disease Patterns -->
+<div class="card mb-3 shadow-lg rounded-soft">
+  <div class="card-header bg-gradient-danger text-white">
+    <i class="fas fa-virus me-2"></i>Top Disease Patterns
+  </div>
+  <div class="card-body">
+    {% if insights.disease_analysis and insights.disease_analysis.disease_distribution %}
+      {% for disease_data in insights.disease_analysis.disease_distribution[:8] %}
+        <div class="mb-2 p-2 border rounded bg-light">
+          <strong>{{ disease_data.disease }}</strong><br>
+          {{ disease_data.cases }} cases ({{ disease_data.prevalence_rate }}%) —
+          <span class="badge
+            {% if disease_data.risk_level in ['High', 'Very High'] %} bg-danger
+            {% elif disease_data.risk_level == 'Medium' %} bg-warning
+            {% else %} bg-success
+            {% endif %}">{{ disease_data.risk_level }} Risk</span>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p class="text-muted">No disease pattern data available.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Geographic Disease Hotspots -->
+<div class="card mb-3 shadow-lg rounded-soft">
+  <div class="card-header bg-gradient-warning text-white">
+    <i class="fas fa-map-marker-alt me-2"></i>Geographic Disease Hotspots
+  </div>
+  <div class="card-body">
+    {% if insights.disease_analysis and insights.disease_analysis.geographic_patterns %}
+      {% for pattern in insights.disease_analysis.geographic_patterns[:8] %}
+        <div class="mb-2 p-2 border rounded bg-light">
+          <strong><i class="fas fa-location-dot me-1"></i>{{ pattern.locality }}</strong><br>
+          {{ pattern.total_cases }} cases<br>
+          Primary: {{ pattern.primary_disease }}
+        </div>
+      {% endfor %}
+    {% else %}
+      <p class="text-muted">No geographic data available.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Age-Based Disease Patterns -->
+<div class="card mb-3 shadow-lg rounded-soft">
+  <div class="card-header bg-gradient-success text-white">
+    <i class="fas fa-users me-2"></i>Age-Based Disease Patterns
+  </div>
+  <div class="card-body">
+    {% if insights.disease_analysis and insights.disease_analysis.demographic_patterns and insights.disease_analysis.demographic_patterns.age_groups %}
+      {% for age_group, data in insights.disease_analysis.demographic_patterns.age_groups.items() %}
+        <div class="d-flex justify-content-between mb-1 border-bottom py-1">
+          <span><i class="fas fa-user me-1 text-secondary"></i><strong>{{ age_group }}</strong></span>
+          <span>{{ data.total_cases }} cases</span>
+          <span class="text-muted">{{ data.top_disease }}</span>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p class="text-muted">No age-group pattern data available.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Capacity Planning -->
+<div class="card mb-3 shadow-lg rounded-soft">
+  <div class="card-header bg-gradient-primary text-white">
+    <i class="fas fa-hospital me-2"></i>Capacity Planning
+  </div>
+  <div class="card-body">
+    {% if insights.visit_analysis and insights.visit_analysis.capacity_insights %}
+      <div class="row text-center">
+        <div class="col"><i class="fas fa-bed text-primary mb-1"></i><br><strong>{{ insights.visit_analysis.capacity_insights.capacity_recommendations.beds_needed }}</strong><br>Beds</div>
+        <div class="col"><i class="fas fa-user-md text-success mb-1"></i><br><strong>{{ insights.visit_analysis.capacity_insights.capacity_recommendations.doctors_needed }}</strong><br>Doctors</div>
+        <div class="col"><i class="fas fa-user-nurse text-warning mb-1"></i><br><strong>{{ insights.visit_analysis.capacity_insights.capacity_recommendations.nurses_needed }}</strong><br>Nurses</div>
+        <div class="col"><i class="fas fa-users-cog text-info mb-1"></i><br><strong>{{ insights.visit_analysis.capacity_insights.capacity_recommendations.admin_staff_needed }}</strong><br>Admin Staff</div>
+      </div>
+    {% else %}
+      <p class="text-muted">Capacity data not available.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Summary -->
+<div class="card mb-3 shadow-lg rounded-soft">
+  <div class="card-header bg-gradient-info text-white">
+    <i class="fas fa-info-circle me-2"></i>Analysis Summary
+  </div>
+  <div class="card-body">
+    <div class="row text-center">
+      <div class="col"><i class="fas fa-user-injured text-primary mb-1"></i><br><strong>{{ insights.summary.total_patients_analyzed if insights.summary else 0 }}</strong><br>Patients</div>
+      <div class="col"><i class="fas fa-virus-slash text-success mb-1"></i><br><strong>{{ insights.disease_analysis.unique_diseases if insights.disease_analysis else 0 }}</strong><br>Unique Conditions</div>
+      <div class="col"><i class="fas fa-map-pin text-warning mb-1"></i><br><strong>{{ insights.visit_analysis.data_summary.localities_covered if insights.visit_analysis and insights.visit_analysis.data_summary else 0 }}</strong><br>Localities</div>
+      <div class="col"><i class="fas fa-percentage text-info mb-1"></i><br><strong>{{ insights.summary.data_quality_score if insights.summary else 0 }}%</strong><br>Data Quality</div>
+    </div>
+    <div class="text-muted mt-2 small">
+      Last Updated: {{ insights.summary.analysis_timestamp.split('T')[0] if insights.summary and insights.summary.analysis_timestamp else 'Unknown' }} |
+      Data Range: {{ insights.visit_analysis.data_summary.date_range if insights.visit_analysis and insights.visit_analysis.data_summary else 'N/A' }}
+    </div>
+  </div>
+</div>
+
+{% endblock %}

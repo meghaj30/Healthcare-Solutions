@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Update Appointment Status{% endblock %}
+{% block content %}
+<div class="container my-5" style="max-width:500px">
+  <div class="card">
+    <div class="card-body">
+      <h4 class="mb-3">Update Status</h4>
+      <form method="post">
+        <div class="mb-2"><b>Patient ID:</b> {{ appointment.patient_id }}</div>
+        <div class="mb-2"><b>Date:</b> {{ appointment.appointment_date.strftime('%Y-%m-%d') }}</div>
+        <div class="mb-2"><b>Time:</b> {{ appointment.appointment_time.strftime('%H:%M') }}</div>
+        <div class="mb-2"><b>Symptoms:</b> {{ appointment.symptoms }}</div>
+        <div class="mb-2"><b>Queue:</b> {{ appointment.queue_number }}</div>
+        <div class="mb-3"><b>Current Status:</b> <span class="badge bg-info">{{ appointment.status }}</span></div>
+        <div class="mb-3">
+          <label for="status" class="form-label">New Status</label>
+          <select class="form-select" name="status" id="status">
+            {% for value in ['Pending', 'Confirmed', 'Ongoing', 'Completed', 'Cancelled'] %}
+            <option value="{{ value }}" {% if appointment.status == value %}selected{% endif %}>{{ value }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Update Status</button>
+        <a href="{{ url_for('doctor.doctor_dashboard') }}" class="btn btn-secondary ms-2">Back</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

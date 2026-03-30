@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+{% block title %}Patient Dashboard{% endblock %}
+{% block content %}
+<div class="container my-4">
+    <!-- Welcome Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h3>
+                                <i class="fas fa-user-injured"></i> 
+                                Welcome back, {{ patient.name }}!
+                            </h3>
+                            <p class="mb-0">
+                                HMS ID: <strong>{{ patient.patient_id }}</strong> | 
+                                {% if patient.email %}{{ patient.email }}{% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <a href="{{ url_for('patient_auth.patient_logout') }}" class="btn btn-light">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications Section -->
+    {% if confirmed_appointments %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <h5><i class="fas fa-bell"></i> Appointment Confirmations!</h5>
+                {% for apt in confirmed_appointments %}
+                <div class="mb-2">
+                    <strong>Dr. {{ apt.doctor.name }}</strong> has confirmed your appointment 
+                    on {{ apt.appointment_date.strftime('%d %B %Y') }} at {{ apt.appointment_time.strftime('%I:%M %p') }}
+                    {% if apt.consultation_type == 'Video' and apt.video_link %}
+                    <div class="mt-2">
+                        <a href="{{ apt.video_link }}" class="btn btn-success btn-sm">
+                            <i class="fas fa-video"></i> Join Video Call
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-info text-white text-center">
+                <div class="card-body">
+                    <i class="fas fa-calendar-plus fa-2x mb-2"></i>
+                    <h6>Book Appointment</h6>
+                    <a href="{{ url_for('appointment.book_appointment') }}" class="btn btn-light btn-sm">
+                        Book Now
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white text-center">
+                <div class="card-body">
+                    <i class="fas fa-video fa-2x mb-2"></i>
+                    <h6>Video Calls</h6>
+                    <span class="badge bg-light text-dark">{{ confirmed_appointments|length }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white text-center">
+                <div class="card-body">
+                    <i class="fas fa-clock fa-2x mb-2"></i>
+                    <h6>Pending</h6>
+                    <span class="badge bg-light text-dark">{{ pending_appointments|length }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-secondary text-white text-center">
+                <div class="card-body">
+                    <i class="fas fa-user-md fa-2x mb-2"></i>
+                    <h6>My Doctors</h6>
+                    <a href="{{ url_for('patient_auth.patient_appointments') }}" class="btn btn-light btn-sm">
+                        View All
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Appointments Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="fas fa-calendar-alt"></i> Your Appointments</h5>
+                    <div>
+                        <button class="btn btn-sm btn-outline-primary" onclick="refreshAppointments()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                        <a href="{{ url_for('patient_auth.patient_appointments') }}" class="btn btn-sm btn-primary">
+                            View All
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if appointments %}
+                        <div class="row">
+                            {% for appointment in appointments[:6] %}
+                            <div class="col-lg-6 mb-3">
+                                <div class="card border-left-primary">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <h6 class="card-title">
+                                                    <i class="fas fa-user-md"></i> Dr. {{ appointment.doctor.name }}
+                                                </h6>
+                                                <p class="text-muted mb-1">{{ appointment.doctor.specialization }}</p>
+                                                <p class="mb-1">
+                                                    <i class="fas fa-calendar"></i> 
+                                                    {{ appointment.appointment_date.strftime('%d %B %Y') }}
+                                                    <i class="fas fa-clock ms-2"></i>
+                                                    {{ appointment.appointment_time.strftime('%I:%M %p') }}
+                                                </p>
+                                                {% if appointment.symptoms %}
+                                                <p class="mb-0">
+                                                    <small>{{ appointment.symptoms[:50] }}{% if appointment.symptoms|length > 50 %}...{% endif %}</small>
+                                                </p>
+                                                {% endif %}
+                                            </div>
+                                            <div class="text-end">
+                                                <span class="badge bg-{{ 'success' if appointment.status == 'Confirmed' else 'warning' if appointment.status == 'Pending' else 'danger' }}">
+                                                    {{ appointment.status }}
+                                                </span>
+                                                <div class="mt-2">
+                                                    <span class="badge bg-{{ 'success' if appointment.consultation_type == 'Video' else 'info' }}">
+                                                        <i class="fas fa-{{ 'video' if appointment.consultation_type == 'Video' else 'hospital' }}"></i>
+                                                        {{ appointment.consultation_type }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Video Call Button -->
+                                        {% if appointment.consultation_type == 'Video' and appointment.status == 'Confirmed' and appointment.video_link %}
+                                        <div class="mt-3">
+                                            <a href="{{ appointment.video_link }}" class="btn btn-success btn-sm">
+                                                <i class="fas fa-video"></i> Join Video Call
+                                            </a>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        <!-- Action Buttons -->
+                                        <div class="mt-2">
+                                            <a href="{{ url_for('appointment.view_appointment', appointment_id=appointment.appointment_id) }}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i> Details
+                                            </a>
+                                            {% if appointment.status == 'Pending' %}
+                                            <small class="text-muted ms-2">
+                                                <i class="fas fa-clock"></i> Waiting for confirmation
+                                            </small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                            <h5>No appointments yet</h5>
+                            <p class="text-muted">You haven't booked any appointments yet.</p>
+                            <a href="{{ url_for('appointment.book_appointment') }}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Book Your First Appointment
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Real-time Notification Script -->
+    <script>
+        let notificationInterval;
+        
+        function checkNotifications() {
+            fetch('/patient/check_notifications')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success' && data.notifications.length > 0) {
+                        // Show notification popup
+                        data.notifications.forEach(notification => {
+                            showNotification(notification);
+                        });
+                        
+                        // Refresh page after showing notifications
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 3000);
+                    }
+                })
+                .catch(error => console.log('Error checking notifications:', error));
+        }
+        
+        function showNotification(notification) {
+            // Create notification element
+            const notificationDiv = document.createElement('div');
+            notificationDiv.className = 'alert alert-success alert-dismissible fade show position-fixed';
+            notificationDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            notificationDiv.innerHTML = `
+                <h6><i class="fas fa-bell"></i> New Appointment Confirmation!</h6>
+                <p class="mb-1">${notification.message}</p>
+                ${notification.video_link ? `<a href="${notification.video_link}" class="btn btn-success btn-sm">Join Video Call</a>` : ''}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(notificationDiv);
+            
+            // Auto-remove after 10 seconds
+            setTimeout(() => {
+                if (notificationDiv.parentNode) {
+                    notificationDiv.parentNode.removeChild(notificationDiv);
+                }
+            }, 10000);
+        }
+        
+        function refreshAppointments() {
+            window.location.reload();
+        }
+        
+        // Start checking for notifications every 30 seconds
+        notificationInterval = setInterval(checkNotifications, 30000);
+        
+        // Check immediately on load
+        checkNotifications();
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (notificationInterval) {
+                clearInterval(notificationInterval);
+            }
+        });
+    </script>
+</div>
+
+<style>
+.border-left-primary {
+    border-left: 4px solid #007bff !important;
+}
+
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.badge {
+    font-size: 0.75em;
+}
+</style>
+{% endblock %}

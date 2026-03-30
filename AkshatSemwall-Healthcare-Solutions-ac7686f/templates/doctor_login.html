@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}Doctor Login{% endblock %}
+{% block content %}
+<div class="container my-5" style="max-width:500px">
+  <div class="card">
+    <div class="card-body">
+      <h3 class="mb-4">Doctor Login</h3>
+      <form method="post">
+        <div class="mb-3">
+          <label for="doctorName" class="form-label">Doctor Name</label>
+          <input type="text" class="form-control" name="name" id="doctorName" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Login</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

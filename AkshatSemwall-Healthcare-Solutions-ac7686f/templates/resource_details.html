@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+{% block title %}{{ resource.name }} - Resource Details{% endblock %}
+{% block content %}
+<div class="container my-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4>
+                        <i class="fas fa-{{ 'pills' if resource.category == 'Medicine' else 'tools' if resource.category == 'Equipment' else 'box' }}"></i>
+                        {{ resource.name }}
+                    </h4>
+                    <div>
+                        <span class="badge bg-{{ 'danger' if resource.current_stock == 0 else 'warning' if resource.current_stock <= resource.minimum_stock else 'success' }} fs-6">
+                            {{ resource.status }}
+                        </span>
+                        <a href="{{ url_for('resource.resource_dashboard') }}" class="btn btn-primary ms-2">
+                            <i class="fas fa-arrow-left"></i> Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Category:</strong> {{ resource.category }}</p>
+                                    <p><strong>Current Stock:</strong> 
+                                        <span class="badge bg-{{ 'danger' if resource.current_stock == 0 else 'warning' if resource.current_stock <= resource.minimum_stock else 'success' }}">
+                                            {{ resource.current_stock }} {{ resource.unit }}
+                                        </span>
+                                    </p>
+                                    <p><strong>Minimum Stock:</strong> {{ resource.minimum_stock }} {{ resource.unit }}</p>
+                                    <p><strong>Maximum Stock:</strong> {{ resource.maximum_stock }} {{ resource.unit }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    {% if resource.location %}
+                                    <p><strong>Location:</strong> {{ resource.location }}</p>
+                                    {% endif %}
+                                    {% if resource.supplier %}
+                                    <p><strong>Supplier:</strong> {{ resource.supplier }}</p>
+                                    {% endif %}
+                                    {% if resource.cost_per_unit %}
+                                    <p><strong>Cost per Unit:</strong> ${{ "%.2f"|format(resource.cost_per_unit) }}</p>
+                                    {% endif %}
+                                    {% if resource.expiry_date %}
+                                    <p><strong>Expiry Date:</strong> 
+                                        <span class="text-{{ 'danger' if resource.expiry_date <= today else 'warning' if resource.expiry_date <= today + timedelta(days=30) else 'muted' }}">
+                                            {{ resource.expiry_date.strftime('%d %B %Y') }}
+                                        </span>
+                                    </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% if resource.description %}
+                            <p><strong>Description:</strong> {{ resource.description }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <!-- Stock Level Visual -->
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6>Stock Level</h6>
+                                    <div class="mb-3">
+                                        <div class="progress" style="height: 25px;">
+                                            {% set stock_percentage = (resource.current_stock / resource.maximum_stock * 100) %}
+                                            <div class="progress-bar bg-{{ 'danger' if resource.current_stock == 0 else 'warning' if resource.current_stock <= resource.minimum_stock else 'success' }}" 
+                                                 role="progressbar" style="width: {{ stock_percentage }}%">
+                                                {{ "%.1f"|format(stock_percentage) }}%
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p class="mb-0">
+                                        <strong>{{ resource.current_stock }}</strong> / {{ resource.maximum_stock }} {{ resource.unit }}
+                                    </p>
+                                    {% if resource.last_restocked %}
+                                    <small class="text-muted">
+                                        Last restocked: {{ resource.last_restocked.strftime('%d %b %Y') }}
+                                    </small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stock Update Form -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-edit"></i> Update Stock</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('resource.update_stock', resource_id=resource.resource_id) }}">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="transaction_type" class="form-label">Transaction Type</label>
+                                <select class="form-select" id="transaction_type" name="transaction_type" required>
+                                    <option value="Stock In">Stock In</option>
+                                    <option value="Stock Out">Stock Out</option>
+                                    <option value="Used">Used</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="quantity" class="form-label">Quantity</label>
+                                <input type="number" class="form-control" id="quantity" name="quantity" min="1" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="reason" class="form-label">Reason</label>
+                                <input type="text" class="form-control" id="reason" name="reason" 
+                                       placeholder="e.g., New shipment, Patient use">
+                            </div>
+                            <div class="col-md-2">
+                                <label for="performed_by" class="form-label">Performed By</label>
+                                <input type="text" class="form-control" id="performed_by" name="performed_by" 
+                                       placeholder="Staff name">
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Update
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stock Trend Chart -->
+    {% if stock_levels %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-line"></i> Stock Trend (Last {{ stock_levels|length }} Transactions)</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="stockChart" width="400" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Transaction History -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-history"></i> Transaction History</h5>
+                </div>
+                <div class="card-body">
+                    {% if transactions %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Date & Time</th>
+                                        <th>Type</th>
+                                        <th>Quantity</th>
+                                        <th>Remaining Stock</th>
+                                        <th>Reason</th>
+                                        <th>Performed By</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for transaction in transactions %}
+                                    <tr>
+                                        <td>{{ transaction.transaction_date.strftime('%d %b %Y %H:%M') }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ 'success' if transaction.transaction_type == 'Stock In' else 'warning' if transaction.transaction_type == 'Used' else 'danger' }}">
+                                                {{ transaction.transaction_type }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if transaction.transaction_type == 'Stock In' %}
+                                                <span class="text-success">+{{ transaction.quantity }}</span>
+                                            {% else %}
+                                                <span class="text-danger">-{{ transaction.quantity }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{{ 'danger' if transaction.remaining_stock == 0 else 'warning' if transaction.remaining_stock <= resource.minimum_stock else 'success' }}">
+                                                {{ transaction.remaining_stock }} {{ resource.unit }}
+                                            </span>
+                                        </td>
+                                        <td>{{ transaction.reason or '-' }}</td>
+                                        <td>{{ transaction.performed_by or '-' }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center">No transactions recorded yet</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js for stock trend -->
+{% if stock_levels %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('stockChart').getContext('2d');
+    const stockLevels = [{% for level in stock_levels %}{{ level }}{% if not loop.last %},{% endif %}{% endfor %}];
+    const stockChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: stockLevels.map((_, index) => 'T' + (index + 1)),
+            datasets: [{
+                label: 'Stock Level',
+                data: stockLevels,
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.1,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Stock: ' + context.parsed.y + ' {{ resource.unit }}';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: {{ resource.maximum_stock }},
+                    ticks: {
+                        callback: function(value) {
+                            return value + ' {{ resource.unit }}';
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endif %}
+
+{% endblock %}
