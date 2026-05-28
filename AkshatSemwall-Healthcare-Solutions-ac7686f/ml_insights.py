@@ -1,7 +1,6 @@
 from flask import render_template, jsonify, request
 from app import app
-from utils import load_patients_from_csv
-from optimized_ml_engine import OptimizedMLEngine
+from random_forest_ml import RandomForestMLEngine
 from datetime import datetime, timedelta
 import logging
 from collections import Counter
@@ -10,22 +9,30 @@ from flask import send_file
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 import io
+import os
+import shutil
+
+# First, copy our dummy data to the expected CSV filename
+DUMMY_DATA = 'patient_records_dummy.csv'
+EXPECTED_DATA = 'patient_records_with_timestamp.csv'
+if os.path.exists(DUMMY_DATA) and not os.path.exists(EXPECTED_DATA):
+    shutil.copyfile(DUMMY_DATA, EXPECTED_DATA)
 
 @app.route('/ml_insights')
 def ml_insights():
-    """ML Insights and predictions page with real-time ML models"""
+    """ML Insights and predictions page with real Random Forest models"""
     try:
-        patients = load_patients_from_csv()
-        
-        # Initialize optimized ML engine
-        ml_engine = OptimizedMLEngine()
+        # Initialize Random Forest ML engine
+        ml_engine = RandomForestMLEngine()
         
         # Generate comprehensive ML insights using real patient data
-        insights = ml_engine.generate_insights(patients)    
+        insights = ml_engine.generate_comprehensive_insights()    
         
         return render_template('ml_insights_optimized.html', insights=insights)
     except Exception as e:
         logging.error(f"Error loading ML insights: {e}")
+        import traceback
+        traceback.print_exc()
         return render_template('error.html', error="Error loading ML insights")
 
 @app.route('/api/ml/visit_predictions')
