@@ -1,0 +1,173 @@
+{
+  "summary": {
+    "total_patients_analyzed": 1000,
+    "data_quality_score": 100.0,
+    "analysis_timestamp": "2026-05-28T21:54:48.054907"
+  },
+  "visit_analysis": {
+    "peak_times": {
+      "peak_hour": "0:00 (1000 visits)",
+      "peak_day": "Saturday",
+      "peak_month": "2024-11"
+    },
+    "visit_predictions": {
+      "weekly_forecast": [
+        {
+          "day_name": "Friday",
+          "predicted_visits": 2
+        },
+        {
+          "day_name": "Saturday",
+          "predicted_visits": 2
+        },
+        {
+          "day_name": "Sunday",
+          "predicted_visits": 2
+        },
+        {
+          "day_name": "Monday",
+          "predicted_visits": 1
+        },
+        {
+          "day_name": "Tuesday",
+          "predicted_visits": 2
+        },
+        {
+          "day_name": "Wednesday",
+          "predicted_visits": 1
+        },
+        {
+          "day_name": "Thursday",
+          "predicted_visits": 2
+        }
+      ]
+    },
+    "capacity_insights": {
+      "capacity_recommendations": {
+        "beds_needed": 20,
+        "doctors_needed": 5,
+        "nurses_needed": 10,
+        "admin_staff_needed": 4
+      }
+    },
+    "data_summary": {
+      "localities_covered": 24,
+      "date_range": "2024-05-27 00:00:00 to 2026-05-27 00:00:00"
+    }
+  },
+  "disease_analysis": {
+    "disease_distribution": [
+      {
+        "disease": "Heart Disease",
+        "cases": 24,
+        "prevalence_rate": 2.4,
+        "risk_level": "Low"
+      },
+      {
+        "disease": "Bronchitis",
+        "cases": 21,
+        "prevalence_rate": 2.1,
+        "risk_level": "Low"
+      },
+      {
+        "disease": "Dental Problem",
+        "cases": 21,
+        "prevalence_rate": 2.1,
+        "risk_level": "Low"
+      },
+      {
+        "disease": "Sinusitis",
+        "cases": 21,
+        "prevalence_rate": 2.1,
+        "risk_level": "Low"
+      },
+      {
+        "disease": "IBD",
+        "cases": 20,
+        "prevalence_rate": 2.0,
+        "risk_level": "Low"
+      },
+      {
+        "disease": "COVID-19",
+        "cases": 20,
+        "prevalence_rate": 2.0,
+        "risk_level": "Low"
+      },
+      {
+        "disease": "Food Poisoning",
+        "cases": 19,
+        "prevalence_rate": 1.9,
+        "risk_level": "Low"
+      },
+      {
+        "disease": "Dengue",
+        "cases": 19,
+        "prevalence_rate": 1.9,
+        "risk_level": "Low"
+      }
+    ],
+    "geographic_patterns": [
+      {
+        "locality": "HSR Layout",
+        "total_cases": 56,
+        "primary_disease": "Alzheimer's Disease"
+      },
+      {
+        "locality": "HBR Layout",
+        "total_cases": 54,
+        "primary_disease": "Appendicitis"
+      },
+      {
+        "locality": "Whitefield",
+        "total_cases": 49,
+        "primary_disease": "Coronary Artery Disease"
+      },
+      {
+        "locality": "MG Road",
+        "total_cases": 48,
+        "primary_disease": "Dengue"
+      },
+      {
+        "locality": "RT Nagar",
+        "total_cases": 46,
+        "primary_disease": "Eczema"
+      },
+      {
+        "locality": "Rajajinagar",
+        "total_cases": 46,
+        "primary_disease": "COVID-19"
+      },
+      {
+        "locality": "Banaswadi",
+        "total_cases": 44,
+        "primary_disease": "Cancer - Breast"
+      },
+      {
+        "locality": "Commercial Street",
+        "total_cases": 44,
+        "primary_disease": "Eye Infection"
+      }
+    ],
+    "demographic_patterns": {
+      "age_groups": {
+        "Children (0-17)": {
+          "total_cases": 169,
+          "top_disease": "Cellulitis"
+        },
+        "Young Adults (18-35)": {
+          "total_cases": 187,
+          "top_disease": "Alzheimer's Disease"
+        },
+        "Middle-aged (36-60)": {
+          "total_cases": 259,
+          "top_disease": "Sinusitis"
+        },
+        "Seniors (61+)": {
+          "total_cases": 379,
+          "top_disease": "Heart Disease"
+        }
+      }
+    },
+    "unique_diseases": 72
+  }
+}

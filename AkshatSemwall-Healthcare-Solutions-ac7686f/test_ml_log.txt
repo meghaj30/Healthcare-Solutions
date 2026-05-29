@@ -1,0 +1,22 @@
+Testing Random Forest ML Engine...
+C:\Users\papam\Downloads\AkshatSemwall-Healthcare-Solutions-ac7686f 3\AkshatSemwall-Healthcare-Solutions-ac7686f\random_forest_ml.py:145: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
+  age_patterns = df.groupby('age_group')['medical_history'].agg(
+
+Generated Insights Successfully!
+
+--- Data Summary ---
+Total Patients: 1000
+
+--- Visit Predictions ---
+Friday: 2 visits
+Saturday: 2 visits
+Sunday: 2 visits
+Monday: 1 visits
+Tuesday: 2 visits
+Wednesday: 1 visits
+Thursday: 2 visits
+
+--- Top Diseases ---
+Heart Disease: 24 cases (2.4%)
+Bronchitis: 21 cases (2.1%)
+Dental Problem: 21 cases (2.1%)
